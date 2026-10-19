@@ -76,3 +76,42 @@ th { background:rgba(5,26,46,.68); }
 tbody tr { transition:background .15s; }
 tbody tr:hover { background:rgba(115,204,255,.07); }
 tbody tr:nth-child(5n) td:first-child { color:var(--lime); font-weight:800; }
+
+/* Sunrise challenge palette */
+:root { --ink:#fff9f4; --muted:#dac8df; --navy:#26113d; --panel:#3a1d56; --line:#754a8b; --lime:#ffd166; --sky:#ff8f70; --red:#ff9ab6; }
+body { background:radial-gradient(circle at 8% 4%,#a63570 0,transparent 27%),radial-gradient(circle at 92% 10%,#f06d52 0,transparent 25%),radial-gradient(circle at 52% 100%,#5a2380 0,transparent 38%),linear-gradient(135deg,#1b0b32 0%,#3a164e 55%,#24113c 100%); }
+body::before { background:#ffd166; opacity:.19; }
+body::after { background:#ff6f61; opacity:.2; }
+.hero { border-color:rgba(255,209,102,.27); background:linear-gradient(118deg,rgba(107,33,105,.7),rgba(78,22,81,.32)); }
+.hero::after { color:rgba(255,209,102,.8); }
+.panel,.score-card { border-color:rgba(255,209,102,.16); background:linear-gradient(145deg,rgba(81,33,102,.86),rgba(42,18,65,.93)); }
+.app-nav { border-color:rgba(255,209,102,.21); background:rgba(38,13,57,.55); }
+.app-nav .nav-link:hover { color:#ffd166; background:rgba(255,209,102,.11); }
+input,select { background:rgba(35,12,56,.78); border-color:rgba(255,209,102,.19); }
+input:focus,select:focus { border-color:#ff8f70; box-shadow:0 0 0 3px rgba(255,143,112,.19); background:#3d174f; }
+button { background:linear-gradient(135deg,#ffd166,#ffb65a); border-color:#ffd166; color:#392020; box-shadow:0 9px 20px rgba(255,163,74,.26); }
+button:hover { box-shadow:0 14px 26px rgba(255,163,74,.34); }
+button.secondary { color:#fff9f4; border-color:rgba(255,209,102,.33); background:rgba(55,22,78,.5); }
+.score-card:hover { border-color:rgba(255,209,102,.55); }
+.score-card::after { border-color:rgba(255,209,102,.31); box-shadow:0 0 0 18px rgba(255,209,102,.045),0 0 0 36px rgba(255,209,102,.025); }
+.score-card:nth-child(2)::after { border-color:rgba(255,143,112,.33); box-shadow:0 0 0 18px rgba(255,143,112,.05),0 0 0 36px rgba(255,143,112,.03); }
+.score-card.leader { background:linear-gradient(130deg,rgba(115,40,89,.98),rgba(76,28,80,.98)); }
+.score-card strong { color:#ffd166; }
+.leader strong { color:#ffb296; }
+.achievements::after,.monthly-goals::after { border-color:rgba(255,209,102,.19); }
+.login-panel { background:linear-gradient(115deg,rgba(113,37,100,.95),rgba(47,18,70,.98)); border-color:rgba(255,209,102,.36); }
+.login-button:not(.ab) { background:linear-gradient(135deg,#ffd166,#ffb15c); }
+.login-button.ab { background:linear-gradient(135deg,#ff9675,#ef5d76); border-color:#ff9675; color:#401d35; }
+.habit { background:rgba(45,18,68,.86); border-color:rgba(255,209,102,.13); }
+.habit:hover { border-color:rgba(255,143,112,.55); background:#4b1e61; }
+.habit.check:has(input:checked) { border-color:rgba(255,209,102,.52); background:linear-gradient(145deg,#5c2359,#3b1b5a); }
+.health-tracker,.goal-tracker,.book-tracker,.account-tracker { background:rgba(45,18,68,.86); border-left-color:#ff8f70; box-shadow:inset 12px 0 28px rgba(255,143,112,.06); }
+.goal-tracker { border-left-color:#ffd166; box-shadow:inset 12px 0 28px rgba(255,209,102,.06); }
+.book-tracker { border-left-color:#e5a8ff; box-shadow:inset 12px 0 28px rgba(229,168,255,.06); }
+.bmi-card { background:linear-gradient(135deg,#7a356f,#4e245f); border-color:rgba(255,143,112,.3); }
+.comparison { border-top-color:rgba(255,143,112,.45); }
+.period-controls,.category-grid article,.motivation-note { background:linear-gradient(145deg,rgba(65,25,85,.9),rgba(35,14,57,.93)); }
+.motivation-note { border-color:rgba(255,209,102,.34); }
+.motivation-note h3 { color:#ffd166; }
+th { background:rgba(35,12,56,.72); }
+tbody tr:hover { background:rgba(255,143,112,.08); }
