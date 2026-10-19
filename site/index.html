@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071a2f" />
+    <title>Lock In — Daily Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">VISHWAJEET × ABDUL</p>
+        <h1>Lock in. Every day.</h1>
+        <p>Good habits earn points. Sugar costs one. Compare the consistency and keep moving.</p>
+      </header>
+
+      <nav id="appNav" class="app-nav" hidden>
+        <button id="showComparison" class="nav-link">Comparison</button>
+        <button id="showEntry" class="nav-link">My entry</button>
+        <button id="logOut" class="nav-link">Log out</button>
+      </nav>
+
+      <section id="comparisonPage">
+        <section class="scoreboard" aria-label="Scoreboard">
+        <article class="score-card"><span>Vishwajeet</span><strong id="vishScore">0</strong><small id="vishDetail">0 logged days</small></article>
+        <article class="score-card"><span>Abdul</span><strong id="abdulScore">0</strong><small id="abdulDetail">0 logged days</small></article>
+        <article class="score-card leader"><span>Current lead</span><strong id="leader">Tied</strong><small id="leadDetail">Log a day to begin</small></article>
+        </section>
+
+        <section class="achievements panel" aria-label="Book achievements">
+          <div><p class="eyebrow">ACHIEVEMENTS</p><h2>Books completed</h2></div>
+          <div class="achievement-count"><span>Vishwajeet</span><strong id="vishBooks">0</strong></div>
+          <div class="achievement-count"><span>Abdul</span><strong id="abdulBooks">0</strong></div>
+        </section>
+
+        <section class="monthly-goals panel" aria-label="Monthly goals">
+          <div><p class="eyebrow">MONTHLY MISSIONS</p><h2 id="goalMonthLabel">This month</h2></div>
+          <article><span>Vishwajeet</span><strong id="vishGoal">No mission set</strong></article>
+          <article><span>Abdul</span><strong id="abdulGoal">No mission set</strong></article>
+        </section>
+
+        <section id="loginPanel" class="panel login-panel">
+          <div><p class="eyebrow">ENTER YOUR SPACE</p><h2>Who is checking in?</h2><p>Choose your profile to record today’s work.</p></div>
+          <div class="login-options"><button class="login-button" data-person="Vishwajeet">Log in as Vishwajeet</button><button class="login-button ab" data-person="Abdul">Log in as Abdul</button></div>
+        </section>
+
+        <section class="panel comparison">
+        <div class="section-heading"><div><p class="eyebrow">COMPARISON</p><h2>Consistency check</h2></div><button id="exportData" class="secondary">Export data</button></div>
+        <div class="period-controls">
+          <label>Time period<select id="periodMode"><option value="all">All time</option><option value="month">Monthly</option><option value="day">Particular day</option></select></label>
+          <label id="monthControl" hidden>Month<input id="periodMonth" type="month" /></label>
+          <label id="dayControl" hidden>Date<input id="periodDay" type="date" /></label>
+        </div>
+        <div class="category-grid"><article><p class="eyebrow">CATEGORY BY CATEGORY</p><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Vishwajeet</th><th>Abdul</th></tr></thead><tbody id="categoryComparison"></tbody></table></div></article><aside class="motivation-note"><p class="eyebrow">KEEP GOING</p><h3 id="motivationTitle">The race starts today.</h3><p id="motivationText">Show up for the small things. They become the big things.</p></aside></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Vishwajeet</th><th>Abdul</th><th>Lead</th></tr></thead><tbody id="history"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="entryPage" hidden>
+        <section class="controls panel" aria-label="Tracker controls">
+          <label>Date <input id="date" type="date" /></label>
+          <p class="entry-person">Checking in as <strong id="activePerson"></strong></p>
+          <button id="loadDay" class="secondary">Load day</button>
+          <button id="saveDay">Save today</button>
+        </section>
+
+        <section class="panel form-panel">
+          <div class="section-heading"><div><p class="eyebrow">DAILY CHECK-IN</p><h2 id="formTitle"></h2></div><p id="saveStatus" role="status"></p></div>
+          <section class="health-tracker" aria-label="Body tracking">
+            <div><p class="eyebrow">STRENGTH & BODY TRACKING</p><h3>Daily health snapshot</h3></div>
+            <label>Weight (kg)<input id="weight" data-health="weight" type="number" min="1" step="0.1" placeholder="e.g. 72.5" /></label>
+            <label>Height (cm)<input id="height" data-health="height" type="number" min="1" step="0.1" placeholder="e.g. 175" /></label>
+            <label>Body fat (%)<input id="bodyFat" data-health="bodyFat" type="number" min="0" max="100" step="0.1" placeholder="Monthly entry" /><small id="bodyFatHint" class="health-hint"></small></label>
+            <div class="bmi-card"><span>BMI</span><strong id="dailyBmi">—</strong></div>
+          </section>
+          <section class="goal-tracker" aria-label="Monthly goal">
+            <div><p class="eyebrow">MONTHLY MISSION</p><h3 id="entryGoalMonth">This month</h3></div>
+            <label class="goal-input">Main goal<input id="monthlyGoal" type="text" placeholder="e.g. 20 hours of deep work" /></label>
+            <div class="goal-actions"><button id="saveGoal" class="secondary">Save mission</button><button id="completeGoal">✓ Achieved</button></div>
+            <p id="goalStatus" class="goal-status"></p>
+          </section>
+          <section class="book-tracker" aria-label="Current book">
+            <div><p class="eyebrow">READING</p><h3>Current book</h3></div>
+            <label class="book-title"><span>Book title</span><input id="bookTitle" type="text" placeholder="Type the title once" /></label>
+            <div class="book-actions"><button id="markReading" class="secondary">✓ Reading</button><button id="completeBook">✓ Completed</button></div>
+            <p id="bookStatus" class="book-status"></p>
+          </section>
+          <div id="habitGrid" class="habit-grid"></div>
+        </section>
+      </section>
+
+      <p class="privacy-note">This version saves entries in this browser. For a shared live tracker on GitHub Pages, connect it to a shared data service such as Supabase or Firebase.</p>
+    </main>
+    <template id="checkHabit"><label class="habit check"><span class="habit-name"></span><input type="checkbox" /><span class="toggle" aria-hidden="true"></span></label></template>
+    <template id="numberHabit"><label class="habit field"><span class="habit-name"></span><input /><small class="hint"></small></label></template>
+    <template id="ambitionHabit"><div class="habit ambition"><span class="habit-name"></span><label class="ambition-toggle"><input data-id="ambition" type="checkbox" /><span class="toggle" aria-hidden="true"></span><span>Done</span></label><input data-id="ambitionTime" type="number" min="0" placeholder="Minutes worked" /></div></template>
+    <script src="app.js"></script>
+  </body>
+</html>
