@@ -204,7 +204,7 @@ $('periodMode').addEventListener('change', () => { const mode = $('periodMode').
 $('periodMonth').addEventListener('change', renderSummary); $('periodDay').addEventListener('change', renderSummary);
 function showPage(page) {
   const entering = page === 'entry';
-  $('comparisonPage').hidden = entering; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson;
+  $('comparisonPage').hidden = entering; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson; $('appNav').style.display = activePerson ? 'flex' : 'none';
   if (entering) renderForm(); else renderSummary();
 }
 document.querySelectorAll('.login-button').forEach(button => button.addEventListener('click', () => selectLoginPerson(button.dataset.person)));
