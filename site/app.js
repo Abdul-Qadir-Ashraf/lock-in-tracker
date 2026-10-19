@@ -15,12 +15,14 @@ const habits = [
   { id: 'meditation', label: 'Meditation (10 minutes)', type: 'check' },
   { id: 'ambition', label: 'Ambition work', type: 'ambition' }
 ];
-const key = 'lock-in-v1';
-const booksKey = 'lock-in-books-v1';
-const goalsKey = 'lock-in-goals-v1';
+const key = 'lock-in-v2';
+const booksKey = 'lock-in-books-v2';
+const goalsKey = 'lock-in-goals-v2';
+const accountsKey = 'lock-in-accounts-v2';
 const $ = (id) => document.getElementById(id);
 const dateInput = $('date'), habitGrid = $('habitGrid');
-let activePerson = sessionStorage.getItem('lock-in-person');
+let activePerson = sessionStorage.getItem('lock-in-person-v2');
+let selectedLoginPerson = null;
 dateInput.value = new Date().toLocaleDateString('en-CA');
 $('periodMonth').value = dateInput.value.slice(0, 7); $('periodDay').value = dateInput.value;
 function data() { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch { return {}; } }
@@ -29,6 +31,8 @@ function books() { try { return JSON.parse(localStorage.getItem(booksKey)) || {}
 function saveBooks(value) { localStorage.setItem(booksKey, JSON.stringify(value)); }
 function goals() { try { return JSON.parse(localStorage.getItem(goalsKey)) || {}; } catch { return {}; } }
 function saveGoals(value) { localStorage.setItem(goalsKey, JSON.stringify(value)); }
+function accounts() { try { return JSON.parse(localStorage.getItem(accountsKey)) || { Vishwajeet: '123', Abdul: '123' }; } catch { return { Vishwajeet: '123', Abdul: '123' }; } }
+function saveAccounts(value) { localStorage.setItem(accountsKey, JSON.stringify(value)); }
 function goalMonth() { return dateInput.value.slice(0, 7); }
 function score(entry = {}) {
   const good = ['workout','protein','prayer','water','noPorn','noFap','meditation','ambition'].reduce((sum, id) => sum + (entry[id] ? 1 : 0), 0);
@@ -95,6 +99,23 @@ function saveGoal() {
 function completeGoal() {
   saveGoal(); const allGoals = goals(), entry = allGoals[activePerson]?.[goalMonth()];
   if (!entry) return; entry.achieved = true; saveGoals(allGoals); $('goalStatus').textContent = '✓ Mission achieved this month.'; renderSummary();
+}
+function selectLoginPerson(person) {
+  selectedLoginPerson = person;
+  document.querySelectorAll('.login-button').forEach(button => button.classList.toggle('selected', button.dataset.person === person));
+  $('loginError').textContent = '';
+}
+function logIn() {
+  const password = $('loginPassword').value;
+  if (!selectedLoginPerson) { $('loginError').textContent = 'Choose Vishwajeet or Abdul first.'; return; }
+  if (accounts()[selectedLoginPerson] !== password) { $('loginError').textContent = 'Incorrect password.'; return; }
+  activePerson = selectedLoginPerson; sessionStorage.setItem('lock-in-person-v2', activePerson); $('loginPassword').value = ''; showPage('entry');
+}
+function updatePassword() {
+  const current = $('currentPassword').value, next = $('newPassword').value, allAccounts = accounts();
+  if (allAccounts[activePerson] !== current) { $('passwordStatus').textContent = 'Current password is incorrect.'; return; }
+  if (next.length < 3) { $('passwordStatus').textContent = 'Use at least 3 characters.'; return; }
+  allAccounts[activePerson] = next; saveAccounts(allAccounts); $('currentPassword').value = ''; $('newPassword').value = ''; $('passwordStatus').textContent = 'Password updated.';
 }
 function renderBookTracker() {
   const profile = books()[activePerson] || { current: '', completed: [] };
@@ -178,6 +199,7 @@ $('saveDay').addEventListener('click', saveDay); $('loadDay').addEventListener('
 $('weight').addEventListener('input', renderBmi); $('height').addEventListener('input', renderBmi);
 $('markReading').addEventListener('click', setCurrentBook); $('completeBook').addEventListener('click', completeBook);
 $('saveGoal').addEventListener('click', saveGoal); $('completeGoal').addEventListener('click', completeGoal);
+$('changePassword').addEventListener('click', updatePassword);
 $('periodMode').addEventListener('change', () => { const mode = $('periodMode').value; $('monthControl').hidden = mode !== 'month'; $('dayControl').hidden = mode !== 'day'; renderSummary(); });
 $('periodMonth').addEventListener('change', renderSummary); $('periodDay').addEventListener('change', renderSummary);
 function showPage(page) {
@@ -185,11 +207,10 @@ function showPage(page) {
   $('comparisonPage').hidden = entering; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson;
   if (entering) renderForm(); else renderSummary();
 }
-document.querySelectorAll('.login-button').forEach(button => button.addEventListener('click', () => {
-  activePerson = button.dataset.person || 'Abdul'; sessionStorage.setItem('lock-in-person', activePerson); showPage('entry');
-}));
+document.querySelectorAll('.login-button').forEach(button => button.addEventListener('click', () => selectLoginPerson(button.dataset.person)));
+$('loginSubmit').addEventListener('click', logIn); $('loginPassword').addEventListener('keydown', event => { if (event.key === 'Enter') logIn(); });
 $('showComparison').addEventListener('click', () => showPage('comparison'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
-$('logOut').addEventListener('click', () => { sessionStorage.removeItem('lock-in-person'); activePerson = null; showPage('comparison'); });
+$('logOut').addEventListener('click', () => { sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
 $('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify(data(), null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
 showPage('comparison'); renderSummary();

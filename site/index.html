@@ -42,7 +42,7 @@
 
         <section id="loginPanel" class="panel login-panel">
           <div><p class="eyebrow">ENTER YOUR SPACE</p><h2>Who is checking in?</h2><p>Choose your profile to record today’s work.</p></div>
-          <div class="login-options"><button class="login-button" data-person="Vishwajeet">Log in as Vishwajeet</button><button class="login-button ab" data-person="Abdul">Log in as Abdul</button></div>
+          <div class="login-options"><div class="profile-pick"><button class="login-button" data-person="Vishwajeet">Vishwajeet</button><button class="login-button ab" data-person="Abdul">Abdul</button></div><label>Password<input id="loginPassword" type="password" placeholder="Enter password" /></label><button id="loginSubmit">Log in</button><p id="loginError" class="login-error"></p></div>
         </section>
 
         <section class="panel comparison">
@@ -79,6 +79,13 @@
             <label class="goal-input">Main goal<input id="monthlyGoal" type="text" placeholder="e.g. 20 hours of deep work" /></label>
             <div class="goal-actions"><button id="saveGoal" class="secondary">Save mission</button><button id="completeGoal">✓ Achieved</button></div>
             <p id="goalStatus" class="goal-status"></p>
+          </section>
+          <section class="account-tracker" aria-label="Change password">
+            <div><p class="eyebrow">ACCOUNT</p><h3>Change password</h3></div>
+            <label>Current password<input id="currentPassword" type="password" /></label>
+            <label>New password<input id="newPassword" type="password" /></label>
+            <button id="changePassword" class="secondary">Update password</button>
+            <p id="passwordStatus" class="account-status"></p>
           </section>
           <section class="book-tracker" aria-label="Current book">
             <div><p class="eyebrow">READING</p><h3>Current book</h3></div>
