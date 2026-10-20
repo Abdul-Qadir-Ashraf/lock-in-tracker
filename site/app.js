@@ -118,6 +118,20 @@ async function saveProfileToCloud(person = activePerson) {
   });
   return pendingSync;
 }
+function mergeCloudRows(rows) {
+  (rows || []).forEach(row => {
+    const match = /^(daily|books|goals):(Vishwajeet|Abdul)$/.exec(row.data_key || '');
+    if (!match) return;
+    const [, category, rowPerson] = match;
+    storeCategory(category, rowPerson, row.data || {});
+  });
+}
+async function loadPublicComparison() {
+  if (!supabaseClient) return;
+  const { data: rows, error } = await supabaseClient.from('tracker_data').select('data_key,data,updated_at');
+  if (error) throw error;
+  mergeCloudRows(rows);
+}
 async function syncFromCloud(person) {
   setSyncStatus('Syncing…');
   const { data: authData, error: authError } = await supabaseClient.auth.getUser();
@@ -127,16 +141,7 @@ async function syncFromCloud(person) {
     await supabaseClient.auth.signOut();
     throw new Error('This account does not match the selected tracker profile.');
   }
-  const { data: rows, error } = await supabaseClient.from('tracker_data').select('data_key,data,updated_at');
-  if (error) throw error;
-  // Merge all remote profile partitions into local caches. Local fields are kept on conflicts
-  // so migration never silently discards data already stored on this device.
-  (rows || []).forEach(row => {
-    const match = /^(daily|books|goals):(Vishwajeet|Abdul)$/.exec(row.data_key || '');
-    if (!match) return;
-    const [, category, rowPerson] = match;
-    storeCategory(category, rowPerson, row.data || {});
-  });
+  await loadPublicComparison();
   cloudReady = true;
   // Migrate this profile's local records; remote and local records are merged before upload.
   await saveProfileToCloud(person);
@@ -369,7 +374,14 @@ async function restorePhoneSession() {
   const { data: authData } = await supabaseClient.auth.getUser();
   const email = (authData?.user?.email || '').toLowerCase();
   const person = Object.entries(PROFILE_EMAILS).find(([, profileEmail]) => profileEmail.toLowerCase() === email)?.[0];
-  if (!person) { activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary(); return; }
+  if (!person) {
+    activePerson = null;
+    sessionStorage.removeItem('lock-in-person-v2');
+    try { await loadPublicComparison(); } catch (error) { console.error('Public comparison load failed', error); }
+    showPage('comparison');
+    renderSummary();
+    return;
+  }
   activePerson = person;
   sessionStorage.setItem('lock-in-person-v2', person);
   try {
