@@ -227,3 +227,13 @@ tbody tr:hover { background:rgba(255,143,112,.08); }
   .app-nav .nav-link { font-size: .7rem; }
   .book-actions, .goal-actions { grid-template-columns: 1fr; }
 }
+
+/* Keep the ambition time field clearly tappable on every screen size. */
+.habit.ambition { grid-template-columns: minmax(104px, .7fr) minmax(0, 1fr); align-items: end; }
+.habit.ambition .habit-name { grid-column: 1 / -1; }
+.ambition-time { display: block; min-width: 0; color: var(--muted); font-size: .72rem; font-weight: 800; }
+.ambition-time input { position: relative; z-index: 2; display: block; width: 100%; min-height: 44px; margin-top: 5px; padding: 0 10px; touch-action: manipulation; pointer-events: auto; }
+@media (max-width: 700px) {
+  .habit.ambition { grid-template-columns: 1fr; align-items: stretch; }
+  .ambition-time input { min-height: 48px; font-size: 16px; }
+}

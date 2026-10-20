@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#071a2f" />
     <title>Lock In — Daily Tracker</title>
-    <link rel="stylesheet" href="styles.css?v=mobile-final-1" />
+    <link rel="stylesheet" href="styles.css?v=mobile-final-2" />
   </head>
   <body>
     <main class="shell">
@@ -101,7 +101,7 @@
     </main>
     <template id="checkHabit"><label class="habit check"><span class="habit-name"></span><input type="checkbox" /><span class="toggle" aria-hidden="true"></span></label></template>
     <template id="numberHabit"><label class="habit field"><span class="habit-name"></span><input /><small class="hint"></small></label></template>
-    <template id="ambitionHabit"><div class="habit ambition"><span class="habit-name"></span><label class="ambition-toggle"><input data-id="ambition" type="checkbox" /><span class="toggle" aria-hidden="true"></span><span>Done</span></label><input data-id="ambitionTime" type="number" min="0" placeholder="Minutes worked" /></div></template>
+    <template id="ambitionHabit"><div class="habit ambition"><span class="habit-name"></span><label class="ambition-toggle"><input data-id="ambition" type="checkbox" /><span class="toggle" aria-hidden="true"></span><span>Done</span></label><label class="ambition-time"><span>Minutes</span><input data-id="ambitionTime" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 60" /></label></div></template>
     <script>
       // Load Supabase from a fallback CDN before starting the app. If both CDNs fail,
       // app.js still loads so profile buttons remain usable and a clear error is shown.
