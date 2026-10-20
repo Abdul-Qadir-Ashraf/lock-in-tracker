@@ -161,3 +161,69 @@ button.secondary { color:#fff9f4; border-color:rgba(255,209,102,.33); background
 .motivation-note h3 { color:#ffd166; }
 th { background:rgba(35,12,56,.72); }
 tbody tr:hover { background:rgba(255,143,112,.08); }
+
+/* Final phone-first overrides. Kept last so the visual theme cannot undo them. */
+@media (max-width: 700px) {
+  body { font-size: 15px; }
+  .shell { width: 100%; padding: 14px 12px 36px; }
+  .hero { padding: 24px 17px 47px; margin-bottom: 14px; border-radius: 19px; }
+  .hero h1 { font-size: clamp(2.45rem, 14vw, 3.4rem); line-height: .92; }
+  .hero > p:last-child { font-size: .98rem; margin-bottom: 0; }
+  .hero::after { left: 17px; right: auto; bottom: 17px; font-size: .56rem; }
+
+  .app-nav { display: grid !important; grid-template-columns: repeat(3, 1fr); width: 100%; margin: 0 0 12px; padding: 5px; }
+  .app-nav .nav-link { min-width: 0; min-height: 44px; padding: 0 5px; font-size: .76rem; white-space: nowrap; }
+
+  .scoreboard { grid-template-columns: 1fr; gap: 10px; margin: 12px 0; }
+  .score-card { min-height: 104px; padding: 16px; }
+  .score-card strong { margin: 4px 0; font-size: 2.05rem; }
+  .achievements, .monthly-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; margin: 12px 0; }
+  .achievements > div:first-child, .monthly-goals > div:first-child { grid-column: 1 / -1; }
+  .achievement-count, .monthly-goals article { min-width: 0; padding: 10px 0 0; border-left: 0; border-top: 1px solid rgba(255,209,102,.18); }
+  .achievements > div:first-child, .monthly-goals > div:first-child { padding-top: 0; border-top: 0; }
+
+  .login-panel, .controls, .health-tracker, .goal-tracker, .account-tracker, .book-tracker, .category-grid { grid-template-columns: 1fr; gap: 12px; }
+  .login-panel, .form-panel, .comparison { padding: 16px; }
+  .login-panel h2 { font-size: 1.45rem; }
+  .profile-pick { gap: 8px; }
+  .login-button, .login-options > button { min-height: 50px; }
+
+  .controls { padding: 14px; }
+  .controls label, .entry-person { grid-column: auto; }
+  .controls button { width: 100%; min-height: 48px; }
+  .entry-person { padding-bottom: 2px; }
+  .section-heading { flex-direction: column; gap: 9px; margin-bottom: 16px; }
+  .section-heading .secondary { width: 100%; min-height: 46px; }
+
+  .health-tracker, .goal-tracker, .account-tracker, .book-tracker { padding: 14px; margin-bottom: 14px; }
+  .health-tracker label, .goal-tracker label, .account-tracker label, .book-tracker label { width: 100%; }
+  .bmi-card { min-height: 54px; padding: 9px 12px; }
+  .book-actions, .goal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .book-actions button, .goal-actions button, .account-tracker > button { min-height: 46px; white-space: normal; }
+  .book-status, .goal-status, .account-status { grid-column: auto; }
+
+  .habit-grid { grid-template-columns: 1fr; gap: 10px; }
+  .habit { min-height: 78px; padding: 14px; }
+  .habit-name { margin-bottom: 10px; }
+  .habit.ambition { grid-template-columns: 1fr; gap: 6px; }
+  .habit.ambition .habit-name { grid-column: auto; }
+  .ambition-toggle { justify-content: space-between; min-height: 38px; }
+  .habit.ambition > input { min-height: 44px; }
+
+  .period-controls { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 13px; }
+  .period-controls label { width: 100%; min-width: 0; }
+  .category-grid { margin-bottom: 14px; }
+  .category-grid article, .motivation-note { padding: 14px; }
+  .motivation-note { min-height: 132px; }
+  .table-wrap { width: calc(100% + 4px); margin-inline: -2px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 520px; }
+  .category-grid table { min-width: 490px; }
+  th, td { padding: 10px 11px; white-space: nowrap; }
+  .privacy-note { margin: 17px 2px; font-size: .75rem; }
+}
+
+@media (max-width: 380px) {
+  .hero h1 { font-size: 2.35rem; }
+  .app-nav .nav-link { font-size: .7rem; }
+  .book-actions, .goal-actions { grid-template-columns: 1fr; }
+}
