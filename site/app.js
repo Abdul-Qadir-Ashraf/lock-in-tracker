@@ -27,7 +27,7 @@ const PROFILE_EMAILS = {
   Vishwajeet: 'vishwajeet@roll.com',
   Abdul: 'qadirashrafabdul@gmail.com'
 };
-const supabase = window.supabase?.createClient
+const supabaseClient = window.supabase?.createClient
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
 let cloudReady = false;
@@ -91,12 +91,12 @@ function storeCategory(category, person, payload) {
   }
 }
 async function saveCategoryToCloud(category, person = activePerson) {
-  if (!supabase || !person || !cloudReady) return;
-  const { data: authData } = await supabase.auth.getUser();
+  if (!supabaseClient || !person || !cloudReady) return;
+  const { data: authData } = await supabaseClient.auth.getUser();
   const user = authData?.user;
   if (!user) return;
   const payload = categorySnapshot(category, person);
-  const { error } = await supabase.from('tracker_data').upsert({
+  const { error } = await supabaseClient.from('tracker_data').upsert({
     user_id: user.id,
     data_key: `${category}:${person}`,
     data: payload,
@@ -120,14 +120,14 @@ async function saveProfileToCloud(person = activePerson) {
 }
 async function syncFromCloud(person) {
   setSyncStatus('Syncing…');
-  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const { data: authData, error: authError } = await supabaseClient.auth.getUser();
   if (authError || !authData?.user) throw authError || new Error('Please sign in again.');
   const email = (authData.user.email || '').toLowerCase();
   if (!Object.values(PROFILE_EMAILS).some(x => x.toLowerCase() === email) || PROFILE_EMAILS[person].toLowerCase() !== email) {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     throw new Error('This account does not match the selected tracker profile.');
   }
-  const { data: rows, error } = await supabase.from('tracker_data').select('data_key,data,updated_at');
+  const { data: rows, error } = await supabaseClient.from('tracker_data').select('data_key,data,updated_at');
   if (error) throw error;
   // Merge all remote profile partitions into local caches. Local fields are kept on conflicts
   // so migration never silently discards data already stored on this device.
@@ -143,9 +143,9 @@ async function syncFromCloud(person) {
   setSyncStatus('Synced ✓');
 }
 async function signInProfile(person, password) {
-  if (!supabase) throw new Error('The sign-in service could not load. Refresh the page or try another network, then try again.');
+  if (!supabaseClient) throw new Error('The sign-in service could not load. Refresh the page or try another network, then try again.');
   const email = PROFILE_EMAILS[person];
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) throw error;
   await syncFromCloud(person);
 }
@@ -257,12 +257,12 @@ async function logIn() {
 async function updatePassword() {
   const current = $('currentPassword').value, next = $('newPassword').value;
   if (next.length < 8) { $('passwordStatus').textContent = 'Use at least 8 characters.'; return; }
-  const { data: authData } = await supabase.auth.getUser();
+  const { data: authData } = await supabaseClient.auth.getUser();
   const email = authData?.user?.email;
   if (!email || !current) { $('passwordStatus').textContent = 'Enter your current password.'; return; }
-  const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: current });
+  const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email, password: current });
   if (verifyError) { $('passwordStatus').textContent = 'Current password is incorrect.'; return; }
-  const { error } = await supabase.auth.updateUser({ password: next });
+  const { error } = await supabaseClient.auth.updateUser({ password: next });
   if (error) { $('passwordStatus').textContent = error.message; return; }
   $('currentPassword').value = ''; $('newPassword').value = '';
   $('passwordStatus').textContent = 'Password updated.';
@@ -362,6 +362,6 @@ document.querySelectorAll('.login-button').forEach(button => button.addEventList
 $('loginSubmit').addEventListener('click', logIn); $('loginPassword').addEventListener('keydown', event => { if (event.key === 'Enter') logIn(); });
 $('showComparison').addEventListener('click', () => showPage('comparison'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
-$('logOut').addEventListener('click', async () => { if (supabase) await supabase.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
+$('logOut').addEventListener('click', async () => { if (supabaseClient) await supabaseClient.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
 $('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ daily: data(), books: books(), goals: goals() }, null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
 activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary();
