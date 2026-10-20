@@ -17,6 +17,7 @@
 
       <nav id="appNav" class="app-nav" hidden>
         <button id="showComparison" class="nav-link">Comparison</button>
+        <button id="showReports" class="nav-link">Reports</button>
         <button id="showEntry" class="nav-link">My entry</button>
         <button id="logOut" class="nav-link">Log out</button>
       </nav>
@@ -55,6 +56,24 @@
         <div class="category-grid"><article><p class="eyebrow">CATEGORY BY CATEGORY</p><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Vishwajeet</th><th>Abdul</th></tr></thead><tbody id="categoryComparison"></tbody></table></div></article><aside class="motivation-note"><p class="eyebrow">KEEP GOING</p><h3 id="motivationTitle">The race starts today.</h3><p id="motivationText">Show up for the small things. They become the big things.</p></aside></div>
         <div class="table-wrap"><table><thead><tr><th>Date</th><th>Vishwajeet</th><th>Abdul</th><th>Lead</th></tr></thead><tbody id="history"></tbody></table></div>
         </section>
+      </section>
+
+      <section id="reportsPage" hidden aria-label="Progress reports">
+        <div class="report-heading">
+          <div><p class="eyebrow">WEEKLY REPORT</p><h2 id="reportTitle">Your progress report</h2><p id="reportSubtitle">The numbers behind your momentum.</p></div>
+          <span class="report-badge">LAST 7 DAYS</span>
+        </div>
+        <section class="report-kpis" aria-label="Weekly highlights">
+          <article><span>Weekly score</span><strong id="reportScore">0</strong><small>points earned</small></article>
+          <article><span>Current streak</span><strong id="reportStreak">0</strong><small>days checked in</small></article>
+          <article><span>Habit completion</span><strong id="reportCompletion">0%</strong><small>good habits done</small></article>
+          <article><span>Ambition work</span><strong id="reportAmbition">0m</strong><small>focused minutes</small></article>
+        </section>
+        <section class="report-layout">
+          <article class="report-card report-trend-card"><div class="report-card-head"><div><p class="eyebrow">MOMENTUM</p><h3>7-day score trend</h3></div><span id="reportBestDay">No entries yet</span></div><div id="reportTrend" class="trend-bars" aria-label="Seven day score chart"></div></article>
+          <article class="report-card report-race-card"><p class="eyebrow">THE RACE</p><h3>Last 7 days</h3><div id="reportRace" class="race-lines"></div></article>
+        </section>
+        <section class="report-card report-habits-card"><div class="report-card-head"><div><p class="eyebrow">HABIT REPORT</p><h3>Where to keep your promise</h3></div><span id="reportHabitNote"></span></div><div id="reportHabits" class="habit-report-list"></div></section>
       </section>
 
       <section id="entryPage" hidden>
@@ -112,7 +131,7 @@
         ];
         function loadApp() {
           const app = document.createElement('script');
-          app.src = 'app.js?v=supabase-sync-6';
+          app.src = 'app.js?v=reports-1';
           document.body.appendChild(app);
         }
         function loadSdk(index) {

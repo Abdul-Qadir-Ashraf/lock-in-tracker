@@ -358,15 +358,54 @@ $('saveGoal').addEventListener('click', saveGoal); $('completeGoal').addEventLis
 $('changePassword').addEventListener('click', updatePassword);
 $('periodMode').addEventListener('change', () => { const mode = $('periodMode').value; $('monthControl').hidden = mode !== 'month'; $('dayControl').hidden = mode !== 'day'; renderSummary(); });
 $('periodMonth').addEventListener('change', renderSummary); $('periodDay').addEventListener('change', renderSummary);
+function dayKey(offset) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - offset);
+  return date.toISOString().slice(0, 10);
+}
+function renderReports() {
+  const person = activePerson || 'Abdul';
+  const opponent = person === 'Abdul' ? 'Vishwajeet' : 'Abdul';
+  const all = data();
+  const days = Array.from({ length: 7 }, (_, index) => dayKey(6 - index));
+  const entries = days.map(date => all[date]?.[person] || null);
+  const scoreTotal = entries.reduce((total, entry) => total + score(entry), 0);
+  const goodHabits = ['workout', 'protein', 'prayer', 'readThirty', 'water', 'noPorn', 'noFap', 'meditation', 'ambition'];
+  const checkedDays = entries.filter(Boolean);
+  const completed = checkedDays.reduce((total, entry) => total + goodHabits.filter(key => entry[key]).length, 0);
+  const potential = checkedDays.length * goodHabits.length;
+  let streak = 0;
+  for (let index = 0; index < 365; index += 1) { if (all[dayKey(index)]?.[person]) streak += 1; else break; }
+  const ambitionMinutes = entries.reduce((total, entry) => total + (Number(entry?.ambitionTime) || 0), 0);
+  $('reportTitle').textContent = `${person}'s progress report`;
+  $('reportSubtitle').textContent = checkedDays.length ? `${checkedDays.length} check-in${checkedDays.length === 1 ? '' : 's'} in the last 7 days. Keep the chain alive.` : 'Your next check-in starts the story.';
+  $('reportScore').textContent = scoreTotal;
+  $('reportStreak').textContent = streak;
+  $('reportCompletion').textContent = potential ? `${Math.round((completed / potential) * 100)}%` : '0%';
+  $('reportAmbition').textContent = `${ambitionMinutes}m`;
+  const highScore = Math.max(1, ...entries.map(entry => score(entry)));
+  $('reportTrend').innerHTML = days.map((date, index) => { const value = score(entries[index]); const label = new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2); return `<div class="trend-day"><span class="trend-value">${value || '—'}</span><div class="trend-track"><i style="height:${Math.max(value > 0 ? 12 : 0, (Math.max(0, value) / highScore) * 100)}%"></i></div><small>${label}</small></div>`; }).join('');
+  const best = entries.reduce((winner, entry, index) => score(entry) > winner.value ? { value: score(entry), date: days[index] } : winner, { value: 0, date: null });
+  $('reportBestDay').textContent = best.date ? `Best: ${best.value} pts · ${new Date(`${best.date}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'No entries yet';
+  const weeklyScore = name => days.reduce((total, date) => total + score(all[date]?.[name]), 0);
+  const own = weeklyScore(person), theirs = weeklyScore(opponent), maxRace = Math.max(1, own, theirs);
+  $('reportRace').innerHTML = [person, opponent].map(name => { const value = weeklyScore(name); return `<div class="race-line"><span>${name}</span><div><i style="width:${(value / maxRace) * 100}%"></i></div><strong>${value}</strong></div>`; }).join('');
+  const habitStats = goodHabits.map(key => ({ label: habits.find(habit => habit.id === key)?.label.replace(/ \(.+\)/, '') || key, count: checkedDays.filter(entry => entry[key]).length }));
+  const strongest = habitStats.reduce((bestHabit, habit) => habit.count > bestHabit.count ? habit : bestHabit, habitStats[0]);
+  $('reportHabitNote').textContent = checkedDays.length ? `Best: ${strongest.label}` : 'Start with one habit';
+  $('reportHabits').innerHTML = habitStats.map(habit => { const percent = checkedDays.length ? Math.round((habit.count / checkedDays.length) * 100) : 0; return `<div class="habit-report"><span>${habit.label}</span><div><i style="width:${percent}%"></i></div><strong>${habit.count}/${checkedDays.length || 0}</strong></div>`; }).join('');
+}
 function showPage(page) {
-  const entering = page === 'entry';
+  const entering = page === 'entry', reporting = page === 'reports';
   $('loginPanel').hidden = Boolean(activePerson);
-  $('comparisonPage').hidden = entering; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson; $('appNav').style.display = activePerson ? 'flex' : 'none';
-  if (entering) renderForm(); else renderSummary();
+  $('comparisonPage').hidden = entering || reporting; $('reportsPage').hidden = !reporting; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson; $('appNav').style.display = activePerson ? 'flex' : 'none';
+  if (entering) renderForm(); else if (reporting) renderReports(); else renderSummary();
 }
 document.querySelectorAll('.login-button').forEach(button => button.addEventListener('click', () => selectLoginPerson(button.dataset.person)));
 $('loginSubmit').addEventListener('click', logIn); $('loginPassword').addEventListener('keydown', event => { if (event.key === 'Enter') logIn(); });
 $('showComparison').addEventListener('click', () => showPage('comparison'));
+$('showReports').addEventListener('click', () => showPage('reports'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
 $('logOut').addEventListener('click', async () => { if (supabaseClient) await supabaseClient.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
 $('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ daily: data(), books: books(), goals: goals() }, null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
