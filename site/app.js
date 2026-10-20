@@ -27,7 +27,9 @@ const PROFILE_EMAILS = {
   Vishwajeet: 'vishwajeet@roll.com',
   Abdul: 'qadirashrafabdul@gmail.com'
 };
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const supabase = window.supabase?.createClient
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+  : null;
 let cloudReady = false;
 let syncInProgress = false;
 let pendingSync = Promise.resolve();
@@ -141,6 +143,7 @@ async function syncFromCloud(person) {
   setSyncStatus('Synced ✓');
 }
 async function signInProfile(person, password) {
+  if (!supabase) throw new Error('The sign-in service could not load. Refresh the page or try another network, then try again.');
   const email = PROFILE_EMAILS[person];
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
@@ -359,6 +362,6 @@ document.querySelectorAll('.login-button').forEach(button => button.addEventList
 $('loginSubmit').addEventListener('click', logIn); $('loginPassword').addEventListener('keydown', event => { if (event.key === 'Enter') logIn(); });
 $('showComparison').addEventListener('click', () => showPage('comparison'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
-$('logOut').addEventListener('click', async () => { await supabase.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
+$('logOut').addEventListener('click', async () => { if (supabase) await supabase.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
 $('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ daily: data(), books: books(), goals: goals() }, null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
 activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary();

@@ -102,7 +102,29 @@
     <template id="checkHabit"><label class="habit check"><span class="habit-name"></span><input type="checkbox" /><span class="toggle" aria-hidden="true"></span></label></template>
     <template id="numberHabit"><label class="habit field"><span class="habit-name"></span><input /><small class="hint"></small></label></template>
     <template id="ambitionHabit"><div class="habit ambition"><span class="habit-name"></span><label class="ambition-toggle"><input data-id="ambition" type="checkbox" /><span class="toggle" aria-hidden="true"></span><span>Done</span></label><input data-id="ambitionTime" type="number" min="0" placeholder="Minutes worked" /></div></template>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=supabase-sync-1"></script>
+    <script>
+      // Load Supabase from a fallback CDN before starting the app. If both CDNs fail,
+      // app.js still loads so profile buttons remain usable and a clear error is shown.
+      (function loadTrackerScripts() {
+        const sources = [
+          'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+          'https://unpkg.com/@supabase/supabase-js@2'
+        ];
+        function loadApp() {
+          const app = document.createElement('script');
+          app.src = 'app.js?v=supabase-sync-2';
+          document.body.appendChild(app);
+        }
+        function loadSdk(index) {
+          if (index >= sources.length) { loadApp(); return; }
+          const sdk = document.createElement('script');
+          sdk.src = sources[index];
+          sdk.onload = loadApp;
+          sdk.onerror = () => loadSdk(index + 1);
+          document.head.appendChild(sdk);
+        }
+        loadSdk(0);
+      })();
+    </script>
   </body>
 </html>
