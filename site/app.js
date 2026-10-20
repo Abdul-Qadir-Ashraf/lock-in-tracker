@@ -48,8 +48,9 @@ function mergeDaily(target, incoming) {
   Object.entries(incoming || {}).forEach(([date, day]) => {
     target[date] ||= {};
     Object.entries(day || {}).forEach(([person, entry]) => {
-      // Merge field-by-field to retain non-conflicting local and cloud values.
-      target[date][person] = { ...(entry || {}), ...(target[date][person] || {}) };
+      // Cloud data is the shared source of truth. Keep local-only fields, but let
+      // a saved cloud value win when an older browser has the same date cached.
+      target[date][person] = { ...(target[date][person] || {}), ...(entry || {}) };
     });
   });
   return target;
