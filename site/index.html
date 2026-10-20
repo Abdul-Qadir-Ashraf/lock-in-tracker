@@ -97,11 +97,12 @@
         </section>
       </section>
 
-      <p class="privacy-note">This version saves entries in this browser. For a shared live tracker on GitHub Pages, connect it to a shared data service such as Supabase or Firebase.</p>
+      <p class="privacy-note">Entries are saved locally and synced to your private shared tracker when you sign in. If sync fails, your local copy remains available.</p>
     </main>
     <template id="checkHabit"><label class="habit check"><span class="habit-name"></span><input type="checkbox" /><span class="toggle" aria-hidden="true"></span></label></template>
     <template id="numberHabit"><label class="habit field"><span class="habit-name"></span><input /><small class="hint"></small></label></template>
     <template id="ambitionHabit"><div class="habit ambition"><span class="habit-name"></span><label class="ambition-toggle"><input data-id="ambition" type="checkbox" /><span class="toggle" aria-hidden="true"></span><span>Done</span></label><input data-id="ambitionTime" type="number" min="0" placeholder="Minutes worked" /></div></template>
-    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=supabase-sync-1"></script>
   </body>
 </html>

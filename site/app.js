@@ -19,6 +19,133 @@ const key = 'lock-in-v2';
 const booksKey = 'lock-in-books-v2';
 const goalsKey = 'lock-in-goals-v2';
 const accountsKey = 'lock-in-accounts-v2';
+// Supabase browser configuration. The publishable key is intended for frontend use;
+// table access is restricted by RLS to the two allowlisted authenticated emails.
+const SUPABASE_URL = 'https://jkuufignhusyxckobplg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_LYIeUNOfrswcsI-S3L3fVQ_dM4OuLHc';
+const PROFILE_EMAILS = {
+  Vishwajeet: 'vishwajeet@roll.com',
+  Abdul: 'qadirashrafabdul@gmail.com'
+};
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let cloudReady = false;
+let syncInProgress = false;
+let pendingSync = Promise.resolve();
+function setSyncStatus(message) {
+  const status = $('saveStatus');
+  if (status) status.textContent = message;
+}
+function profileDailySnapshot(person, all = data()) {
+  const out = {};
+  Object.entries(all).forEach(([date, day]) => {
+    if (day && day[person]) out[date] = { [person]: day[person] };
+  });
+  return out;
+}
+function mergeDaily(target, incoming) {
+  Object.entries(incoming || {}).forEach(([date, day]) => {
+    target[date] ||= {};
+    Object.entries(day || {}).forEach(([person, entry]) => {
+      // Merge field-by-field to retain non-conflicting local and cloud values.
+      target[date][person] = { ...(entry || {}), ...(target[date][person] || {}) };
+    });
+  });
+  return target;
+}
+function mergeProfileObject(target, incoming, person, category) {
+  if (category === 'books') {
+    if (incoming && Object.keys(incoming).length) {
+      const old = target[person] || { current: '', completed: [] };
+      const inc = incoming[person] || incoming;
+      const completed = [...(old.completed || [])];
+      (inc.completed || []).forEach(book => {
+        const title = (typeof book === 'string' ? book : book.title || '').toLowerCase();
+        if (title && !completed.some(x => (typeof x === 'string' ? x : x.title || '').toLowerCase() === title)) completed.push(book);
+      });
+      target[person] = { current: old.current || inc.current || '', completed };
+    }
+  } else if (category === 'goals') {
+    const inc = incoming[person] || incoming || {};
+    target[person] ||= {};
+    Object.entries(inc).forEach(([month, goal]) => {
+      target[person][month] = { ...(goal || {}), ...(target[person][month] || {}) };
+    });
+  }
+  return target;
+}
+function categorySnapshot(category, person) {
+  if (category === 'daily') return profileDailySnapshot(person);
+  if (category === 'books') return { [person]: books()[person] || { current: '', completed: [] } };
+  return { [person]: goals()[person] || {} };
+}
+function storeCategory(category, person, payload) {
+  if (category === 'daily') {
+    const merged = mergeDaily(data(), payload || {});
+    save(merged);
+  } else if (category === 'books') {
+    const merged = books(); mergeProfileObject(merged, payload || {}, person, 'books'); saveBooks(merged);
+  } else {
+    const merged = goals(); mergeProfileObject(merged, payload || {}, person, 'goals'); saveGoals(merged);
+  }
+}
+async function saveCategoryToCloud(category, person = activePerson) {
+  if (!supabase || !person || !cloudReady) return;
+  const { data: authData } = await supabase.auth.getUser();
+  const user = authData?.user;
+  if (!user) return;
+  const payload = categorySnapshot(category, person);
+  const { error } = await supabase.from('tracker_data').upsert({
+    user_id: user.id,
+    data_key: `${category}:${person}`,
+    data: payload,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id,data_key' });
+  if (error) {
+    console.error('Cloud save failed', error);
+    setSyncStatus('Saved on this device; cloud sync failed. Check setup.');
+    throw error;
+  }
+}
+async function saveProfileToCloud(person = activePerson) {
+  if (!cloudReady || !person) return;
+  // Queue writes so rapid taps do not race each other.
+  pendingSync = pendingSync.then(async () => {
+    await saveCategoryToCloud('daily', person);
+    await saveCategoryToCloud('books', person);
+    await saveCategoryToCloud('goals', person);
+  });
+  return pendingSync;
+}
+async function syncFromCloud(person) {
+  setSyncStatus('Syncing…');
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) throw authError || new Error('Please sign in again.');
+  const email = (authData.user.email || '').toLowerCase();
+  if (!Object.values(PROFILE_EMAILS).some(x => x.toLowerCase() === email) || PROFILE_EMAILS[person].toLowerCase() !== email) {
+    await supabase.auth.signOut();
+    throw new Error('This account does not match the selected tracker profile.');
+  }
+  const { data: rows, error } = await supabase.from('tracker_data').select('data_key,data,updated_at');
+  if (error) throw error;
+  // Merge all remote profile partitions into local caches. Local fields are kept on conflicts
+  // so migration never silently discards data already stored on this device.
+  (rows || []).forEach(row => {
+    const match = /^(daily|books|goals):(Vishwajeet|Abdul)$/.exec(row.data_key || '');
+    if (!match) return;
+    const [, category, rowPerson] = match;
+    storeCategory(category, rowPerson, row.data || {});
+  });
+  cloudReady = true;
+  // Migrate this profile's local records; remote and local records are merged before upload.
+  await saveProfileToCloud(person);
+  setSyncStatus('Synced ✓');
+}
+async function signInProfile(person, password) {
+  const email = PROFILE_EMAILS[person];
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  await syncFromCloud(person);
+}
 const $ = (id) => document.getElementById(id);
 const dateInput = $('date'), habitGrid = $('habitGrid');
 let activePerson = sessionStorage.getItem('lock-in-person-v2');
@@ -98,24 +225,44 @@ function saveGoal() {
 }
 function completeGoal() {
   saveGoal(); const allGoals = goals(), entry = allGoals[activePerson]?.[goalMonth()];
-  if (!entry) return; entry.achieved = true; saveGoals(allGoals); $('goalStatus').textContent = '✓ Mission achieved this month.'; renderSummary();
+  if (!entry) return; entry.achieved = true; saveGoals(allGoals); saveProfileToCloud().catch(() => {}); $('goalStatus').textContent = '✓ Mission achieved this month.'; renderSummary();
 }
 function selectLoginPerson(person) {
   selectedLoginPerson = person;
   document.querySelectorAll('.login-button').forEach(button => button.classList.toggle('selected', button.dataset.person === person));
   $('loginError').textContent = '';
 }
-function logIn() {
+async function logIn() {
   const password = $('loginPassword').value;
   if (!selectedLoginPerson) { $('loginError').textContent = 'Choose Vishwajeet or Abdul first.'; return; }
-  if (accounts()[selectedLoginPerson] !== password) { $('loginError').textContent = 'Incorrect password.'; return; }
-  activePerson = selectedLoginPerson; sessionStorage.setItem('lock-in-person-v2', activePerson); $('loginPassword').value = ''; showPage('entry');
+  $('loginSubmit').disabled = true;
+  $('loginError').textContent = 'Signing in and syncing…';
+  try {
+    await signInProfile(selectedLoginPerson, password);
+    activePerson = selectedLoginPerson;
+    sessionStorage.setItem('lock-in-person-v2', activePerson);
+    $('loginPassword').value = '';
+    $('loginError').textContent = '';
+    $('loginPanel').hidden = true;
+    showPage('entry');
+    renderSummary();
+  } catch (error) {
+    console.error(error);
+    $('loginError').textContent = error.message || 'Login failed. Check your email account and password.';
+  } finally { $('loginSubmit').disabled = false; }
 }
-function updatePassword() {
-  const current = $('currentPassword').value, next = $('newPassword').value, allAccounts = accounts();
-  if (allAccounts[activePerson] !== current) { $('passwordStatus').textContent = 'Current password is incorrect.'; return; }
-  if (next.length < 3) { $('passwordStatus').textContent = 'Use at least 3 characters.'; return; }
-  allAccounts[activePerson] = next; saveAccounts(allAccounts); $('currentPassword').value = ''; $('newPassword').value = ''; $('passwordStatus').textContent = 'Password updated.';
+async function updatePassword() {
+  const current = $('currentPassword').value, next = $('newPassword').value;
+  if (next.length < 8) { $('passwordStatus').textContent = 'Use at least 8 characters.'; return; }
+  const { data: authData } = await supabase.auth.getUser();
+  const email = authData?.user?.email;
+  if (!email || !current) { $('passwordStatus').textContent = 'Enter your current password.'; return; }
+  const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: current });
+  if (verifyError) { $('passwordStatus').textContent = 'Current password is incorrect.'; return; }
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) { $('passwordStatus').textContent = error.message; return; }
+  $('currentPassword').value = ''; $('newPassword').value = '';
+  $('passwordStatus').textContent = 'Password updated.';
 }
 function renderBookTracker() {
   const profile = books()[activePerson] || { current: '', completed: [] };
@@ -126,7 +273,7 @@ function setCurrentBook() {
   const title = $('bookTitle').value.trim();
   if (!title) { $('bookStatus').textContent = 'Type a book title first.'; return; }
   const allBooks = books(); allBooks[activePerson] ||= { current: '', completed: [] };
-  allBooks[activePerson].current = title; saveBooks(allBooks);
+  allBooks[activePerson].current = title; saveBooks(allBooks); saveProfileToCloud().catch(() => {});
   $('bookStatus').textContent = `✓ ${title} will carry over until you complete it.`; renderSummary();
 }
 function completeBook() {
@@ -135,7 +282,7 @@ function completeBook() {
   const allBooks = books(); allBooks[activePerson] ||= { current: '', completed: [] };
   const completed = allBooks[activePerson].completed;
   if (!completed.some(book => (typeof book === 'string' ? book : book.title).toLowerCase() === title.toLowerCase())) completed.push({ title, completedOn: dateInput.value });
-  allBooks[activePerson].current = ''; saveBooks(allBooks);
+  allBooks[activePerson].current = ''; saveBooks(allBooks); saveProfileToCloud().catch(() => {});
   $('bookTitle').value = ''; $('bookStatus').textContent = `✓ ${title} added to your achievements.`; renderSummary();
 }
 function saveDay() {
@@ -143,7 +290,7 @@ function saveDay() {
   all[date] ||= {}; all[date][person] = {};
   habitGrid.querySelectorAll('input').forEach(input => all[date][person][input.dataset.id] = input.type === 'checkbox' ? input.checked : input.value.trim());
   document.querySelectorAll('[data-health]').forEach(input => { if (!input.disabled) all[date][person][input.dataset.health] = input.value.trim(); });
-  save(all); $('saveStatus').textContent = 'Saved'; setTimeout(() => $('saveStatus').textContent = '', 1800); renderSummary();
+  save(all); $('saveStatus').textContent = 'Saved on this device…'; saveProfileToCloud().then(() => setSyncStatus('Synced ✓')).catch(() => {}); renderSummary();
 }
 function selectedData() {
   const all = data(), mode = $('periodMode').value, month = $('periodMonth').value, day = $('periodDay').value;
@@ -204,6 +351,7 @@ $('periodMode').addEventListener('change', () => { const mode = $('periodMode').
 $('periodMonth').addEventListener('change', renderSummary); $('periodDay').addEventListener('change', renderSummary);
 function showPage(page) {
   const entering = page === 'entry';
+  $('loginPanel').hidden = Boolean(activePerson);
   $('comparisonPage').hidden = entering; $('entryPage').hidden = !entering; $('appNav').hidden = !activePerson; $('appNav').style.display = activePerson ? 'flex' : 'none';
   if (entering) renderForm(); else renderSummary();
 }
@@ -211,6 +359,6 @@ document.querySelectorAll('.login-button').forEach(button => button.addEventList
 $('loginSubmit').addEventListener('click', logIn); $('loginPassword').addEventListener('keydown', event => { if (event.key === 'Enter') logIn(); });
 $('showComparison').addEventListener('click', () => showPage('comparison'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
-$('logOut').addEventListener('click', () => { sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
-$('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify(data(), null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
-showPage('comparison'); renderSummary();
+$('logOut').addEventListener('click', async () => { await supabase.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
+$('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ daily: data(), books: books(), goals: goals() }, null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
+activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary();
