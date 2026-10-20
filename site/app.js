@@ -364,4 +364,22 @@ $('showComparison').addEventListener('click', () => showPage('comparison'));
 $('showEntry').addEventListener('click', () => showPage('entry'));
 $('logOut').addEventListener('click', async () => { if (supabaseClient) await supabaseClient.auth.signOut(); cloudReady = false; sessionStorage.removeItem('lock-in-person-v2'); activePerson = null; showPage('comparison'); });
 $('exportData').addEventListener('click', () => { const blob = new Blob([JSON.stringify({ daily: data(), books: books(), goals: goals() }, null, 2)], {type:'application/json'}); const link = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:'lock-in-data.json'}); link.click(); URL.revokeObjectURL(link.href); });
-activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary();
+async function restorePhoneSession() {
+  if (!supabaseClient) { activePerson = null; showPage('comparison'); renderSummary(); return; }
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const email = (authData?.user?.email || '').toLowerCase();
+  const person = Object.entries(PROFILE_EMAILS).find(([, profileEmail]) => profileEmail.toLowerCase() === email)?.[0];
+  if (!person) { activePerson = null; sessionStorage.removeItem('lock-in-person-v2'); showPage('comparison'); renderSummary(); return; }
+  activePerson = person;
+  sessionStorage.setItem('lock-in-person-v2', person);
+  try {
+    await syncFromCloud(person);
+    showPage('entry');
+    renderSummary();
+  } catch (error) {
+    console.error('Cloud session restore failed', error);
+    showPage('comparison');
+    renderSummary();
+  }
+}
+restorePhoneSession();
