@@ -331,7 +331,9 @@ function renderSummary() {
   $('vishBooks').textContent = completed.Vishwajeet; $('abdulBooks').textContent = completed.Abdul;
   const entries = Object.fromEntries(people.map(person => [person, Object.keys(all).sort().map(date => all[date][person]).filter(Boolean)]));
   const done = (person, key) => entries[person].filter(entry => entry[key]).length;
+  const total = (person, key) => entries[person].reduce((sum, entry) => sum + (Number(entry?.[key]) || 0), 0);
   const rowsFor = [
+    ['Expense total', p => `₹${total(p, 'expense').toLocaleString('en-IN')}`], ['Donation total', p => `₹${total(p, 'donation').toLocaleString('en-IN')}`],
     ['Workout done', p => `${done(p, 'workout')} days`], ['No sugar eaten', p => `${entries[p].length - done(p, 'sugar')} days`],
     ['Protein complete', p => `${done(p, 'protein')} days`], ['Prayer done', p => `${done(p, 'prayer')} days`],
     ['Read 30 minutes', p => `${done(p, 'readThirty')} days`], ['4L water', p => `${done(p, 'water')} days`], ['No porn', p => `${done(p, 'noPorn')} days`], ['No fap', p => `${done(p, 'noFap')} days`],
